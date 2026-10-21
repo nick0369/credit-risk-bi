@@ -4,6 +4,8 @@ An independent Data Analyst portfolio project that turns a historical credit-car
 
 **30,000 accounts · 180,000 monthly observations · 9 reconciliation checks · TWD currency**
 
+**[Open the live dashboard](https://nick0369.github.io/credit-risk-bi/)** · [Verified PostgreSQL CI run](https://github.com/nick0369/credit-risk-bi/actions/runs/39629135215)
+
 ![Dashboard preview](dashboard/preview.png)
 
 ## Business question
@@ -109,7 +111,7 @@ The dashboard's loss calculator uses positive billed balance × assumed PD × as
 - All 9 real-data reconciliation checks passed.
 - Local lint passed.
 - Browser filters, zero-PD scenario, and reset were exercised.
-- PostgreSQL integration is configured in CI using a PostgreSQL 16 service; it was skipped locally because a local server was unavailable. Check the Actions run for its actual status.
+- PostgreSQL 16 integration passed in the linked GitHub Actions run, including repeated database refresh and reporting views. It remains skipped locally when no test server is configured.
 
 ## Repository map
 
