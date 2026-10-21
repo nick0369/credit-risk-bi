@@ -1,0 +1,20 @@
+-- Import accounts and account_months. Relationship: accounts[account_id] 1:* account_months[account_id].
+-- Keep single-direction filtering from accounts to account_months.
+Accounts = DISTINCTCOUNT(accounts[account_id])
+
+Credit Limits TWD = SUM(accounts[credit_limit])
+
+Positive Billed Balance TWD = SUM(accounts[positive_balance])
+
+Observed Defaults = SUM(accounts[default_next_month])
+
+Observed Default Rate = DIVIDE([Observed Defaults], [Accounts])
+
+Weighted Utilization = DIVIDE([Positive Billed Balance TWD], [Credit Limits TWD])
+
+Historical Bills TWD = SUM(account_months[bill_amount])
+
+Historical Payments TWD = SUM(account_months[payment_amount])
+
+-- Create disconnected numeric What-if parameters named Assumed PD and Assumed LGD (0 to 1).
+Scenario Loss TWD = [Positive Billed Balance TWD] * SELECTEDVALUE('Assumed PD'[Assumed PD], 0.10) * SELECTEDVALUE('Assumed LGD'[Assumed LGD], 0.45)

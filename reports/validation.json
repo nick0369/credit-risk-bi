@@ -1,0 +1,50 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/350/default+of+credit+card+clients.zip",
+  "source_sha256": "56c885f84457f6680f8438f02bfcdac9579323d8a94465ee5f26e32baa727602",
+  "built_at_utc": "2026-10-21T15:25:05.686485+00:00",
+  "currency": "TWD",
+  "accounts": 30000,
+  "account_months": 180000,
+  "checks": [
+    {
+      "check": "account_count",
+      "passed": true
+    },
+    {
+      "check": "unique_accounts",
+      "passed": true
+    },
+    {
+      "check": "six_months_per_account",
+      "passed": true
+    },
+    {
+      "check": "unique_account_month",
+      "passed": true
+    },
+    {
+      "check": "credit_limit_total",
+      "passed": true
+    },
+    {
+      "check": "latest_bill_total",
+      "passed": true
+    },
+    {
+      "check": "default_count",
+      "passed": true
+    },
+    {
+      "check": "history_bill_total",
+      "passed": true
+    },
+    {
+      "check": "history_payment_total",
+      "passed": true
+    }
+  ],
+  "default_rate": 0.2212,
+  "positive_balance": 1537381257.0,
+  "credit_limits": 5024529680.0,
+  "database_loaded": false
+}
