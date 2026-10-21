@@ -1,0 +1,86 @@
+name: Validate and publish project source
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      import_bundle:
+        description: Expand the reviewed project ZIP into the source tree (one time)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  import:
+    if: github.event_name == 'workflow_dispatch' && inputs.import_bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand reviewed project bundle
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, zipfile
+          root = pathlib.Path.cwd()
+          name = os.environ['REPO_NAME']
+          bundle = root / (name + '.zip')
+          with zipfile.ZipFile(bundle) as archive:
+              for info in archive.infolist():
+                  parts = pathlib.PurePosixPath(info.filename).parts
+                  if not parts or parts[0] != name or len(parts) < 2:
+                      raise ValueError('Unexpected archive root')
+                  relative = pathlib.PurePosixPath(*parts[1:])
+                  if '..' in relative.parts or relative.is_absolute():
+                      raise ValueError('Unsafe archive path')
+                  if relative.parts[0] in ('.github', '.git'):
+                      continue
+                  target = root.joinpath(*relative.parts)
+                  if info.is_dir():
+                      target.mkdir(parents=True, exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      target.write_bytes(archive.read(info))
+          bundle.unlink()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all -- . ':!.github'
+          git commit -m "Publish complete project source, dashboard and documentation"
+          git push
+  test:
+    needs: import
+    if: always() && needs.import.result != 'failure' && needs.import.result != 'cancelled'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: project
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: project_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U project -d project_test"
+          --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check source availability
+        id: source
+        run: |
+          if [ -f pyproject.toml ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; else echo "ready=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.source.outputs.ready == 'true'
+        run: pip install -e '.[dev]'
+      - if: steps.source.outputs.ready == 'true'
+        run: ruff check .
+      - if: steps.source.outputs.ready == 'true'
+        run: pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://project:ci_only_password@localhost:5432/project_test
